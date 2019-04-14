@@ -15,46 +15,9 @@ class _ClimaticState extends State<Climatic> {
     
 
     var location = new Location();
+    
+    
 
-   // Map<String,double> userLocation;
-
-  //     @override
-  // void initState() {
-   
-  //     getLocationAccess();
-  //   location.onLocationChanged().listen((value) {
-  //     setState(() {
-  //       userLocation = value;
-  //     });
-  //   });
-  // }
-  var _result;
-  @override
-   void initState() {
-        // This is the proper place to make the async calls
-        // This way they only get called once
-        super.initState();
-        // During development, if you change this code,
-        // you will need to do a full restart instead of just a hot reload
-        
-        // You can't use async/await here,
-        // We can't mark this method as async because of the @override
-        getLocationAccess().then((result) {
-            // If we need to rebuild the widget with the resulting data,
-            // make sure to use `setState`
-            setState(() {
-                _result = result;
-            });
-        });
-    }
-
-  
-
-  
-
-  
-
-  
   
     @override
     Widget build(BuildContext context) {
@@ -82,25 +45,7 @@ class _ClimaticState extends State<Climatic> {
               )
               ),
               new Container(
-                child: new Text(
-                _result['main']['temp'].toString(), style: textStyle(),
-                ),
-              ),
-           
-              new Container(
-                alignment: Alignment.center,
-                margin: const EdgeInsets.fromLTRB(0.0, 30.0, 0.0, 0.0),
-                child: new Text(
-                  _result['name'], style: textStyle(),
-                )
-              ),
-              new Container(
-                alignment: Alignment.topCenter,
-                margin: const EdgeInsets.fromLTRB(0.0, 130.5, 0.0, 0.0),
-                child: new Text(
-
-                  _result["weather"][0]["main"], style: tempStyle(),
-                )
+                child: updateTempWidget()
                 
               ),
             ],
@@ -112,50 +57,51 @@ class _ClimaticState extends State<Climatic> {
         
       
   
-     getWeather(String apiId, double lat, double lon) async{
+   Future<Map> getWeather(String apiId, double lat, double lon) async{
 
-        String weatherUrl = 'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=${util.apiId}';
+        String weatherUrl = 'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=${util.apiId}&units=metric';
         http.Response response = await http.get(weatherUrl);
       
         var dec = json.decode(response.body);
         print(dec.toString());
+        //dec['main']['temp'] = (dec['main']['temp'] - 273.15).round();
         return dec;
   }
 
-// Widget updateTempWidget(){
-//     return new FutureBuilder(
-//       future: _getLocation(),
-//       builder: (BuildContext context, AsyncSnapshot<Map> snapshot){
-//         //where we get all of the json data,we setup widgets
+Widget updateTempWidget(){
+    return new FutureBuilder(
+      future: getLocationAccess(),
+      builder: (BuildContext context, AsyncSnapshot<Map> snapshot){
+        //where we get all of the json data,we setup widgets
 
-//         if(snapshot.hasData){
-//             Map content = snapshot.data;
-//             return new Container(
-//               child: new Column(
-//                 children: <Widget>[
-//                   new ListTile(
-//                     title: new Text(content['main']['temp'].toString(),
-//                     style: tempStyle()
-//                     ),
-//                   ),
-//                   new ListTile(
-//                     title: new Text(content["name"],
-//                     style: textStyle(),),
-//                   ),
-//                   new ListTile(
-//                     title: new Text(content["weather"][0]["main"],
-//                     style: textStyle(),),
-//                   )
-//                 ],
-//               ),
-//             );
-//         }
-//         else{
-//           return new Container();
-//         }
+        if(snapshot.hasData){
+            Map content = snapshot.data;
+            return new Container(
+              child: new Column(
+                children: <Widget>[
+                  new ListTile(
+                    title: new Text((content['main']['temp'].toString())+"°",
+                    style: tempStyle()
+                    ),
+                  ),
+                  new ListTile(
+                    title: new Text(content["name"],
+                    style: textStyle(),),
+                  ),
+                  new ListTile(
+                    title: new Text(content["weather"][0]["main"],
+                    style: textStyle(),),
+                  )
+                ],
+              ),
+            );
+        }
+        else{
+          return new Container();
+        }
 
-//     });
-//   }
+    });
+  }
   
   TextStyle textStyle(){
   
@@ -170,7 +116,6 @@ class _ClimaticState extends State<Climatic> {
   
   TextStyle tempStyle(){
     return new TextStyle(
-  
         color: Colors.white,
         fontStyle: FontStyle.normal,
         fontWeight: FontWeight.w300,
@@ -182,10 +127,11 @@ class _ClimaticState extends State<Climatic> {
     
   }
 
-    _getLocation() async {
+     Future<Map> _getLocation() async {
     var currentLocation = <String, double>{};
     try {
       currentLocation =  await location.getLocation();
+
       
     } catch (e) {
       currentLocation = null;
@@ -193,16 +139,13 @@ class _ClimaticState extends State<Climatic> {
     return currentLocation;
   }
 
-   getLocationAccess() async {
+   Future<Map> getLocationAccess() async {
 
           Map data1 = await _getLocation();
           var lat  = data1['latitude'];
           var lon = data1['longitude'];
           Map data =  await getWeather(util.apiId, lat, lon);
-          
-          // locationData.temperature = data['main']['temp'].toString();
-          // locationData.city = data["name"];
-          // locationData.condition = data["weather"][0]["main"];
+          print(data);
           return data;      
   
        
